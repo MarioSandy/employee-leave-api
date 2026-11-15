@@ -1,59 +1,57 @@
 package com.hr.employee.aspects;
 
 import com.hr.employee.annotations.RequireRole;
-import com.hr.employee.services.AuthService;
-import lombok.RequiredArgsConstructor;
+import com.hr.employee.enums.UserRoleEnum;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
+import java.util.Arrays;
 
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class UserRoleCheckAspect {
 
-    private final AuthService authService; // Your DB repository
-
-    // Intercepts methods annotated with @RequireRoles and reads the annotation values
     @Before("@annotation(requireRoles)")
     public void checkMethodUserRoles(RequireRole requireRoles) {
         validateRole(requireRoles);
     }
 
-    // Intercepts class annotated with @RequireRoles and reads the annotation values
     @Before("@within(requireRoles) && !@annotation(requireRoles)")
     public void checkClassUserRoles(RequireRole requireRoles) {
         validateRole(requireRoles);
     }
 
     private void validateRole(RequireRole requiredRole) {
-        // 1. Get Authentication from Spring Security Context
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication instanceof JwtAuthenticationToken)) {
-            throw new SecurityException("Unauthorized: No authentication context found.");
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuthentication)) {
+            throw new AuthenticationCredentialsNotFoundException(
+                "Unauthorized: No valid JWT authentication found."
+            );
         }
 
-        System.out.println(authentication.getPrincipal() instanceof Jwt jwt);
-        // 2. Extract User ID from the JWT payload principal
-        UUID userId;
-        if (authentication.getPrincipal() instanceof Jwt jwt) {
-            // Adjust "sub" or "userId" based on your exact JWT payload key
-            userId = UUID.fromString(jwt.getClaimAsString("sub"));
-        } else {
-            throw new SecurityException("Unauthorized: Invalid token format.");
+        String roleClaim = jwtAuthentication.getToken().getClaimAsString("role");
+        if (roleClaim == null || roleClaim.isBlank()) {
+            throw new AccessDeniedException("Forbidden: JWT does not contain a role claim.");
         }
 
-        // 4. Verify if the user possesses at least one required role
-        boolean hasPermission = authService.roleCheck(userId, requiredRole.value());
+        final UserRoleEnum userRole;
+        try {
+            userRole = UserRoleEnum.valueOf(roleClaim);
+        } catch (IllegalArgumentException exception) {
+            throw new AccessDeniedException("Forbidden: JWT contains an invalid role claim.");
+        }
 
-        if (!hasPermission) {
-            throw new SecurityException("Forbidden: You do not have the required role : " + requiredRole);
+        if (!Arrays.asList(requiredRole.value()).contains(userRole)) {
+            throw new AccessDeniedException(
+                "Forbidden: You do not have one of the required roles: "
+                    + Arrays.toString(requiredRole.value())
+            );
         }
     }
 }
