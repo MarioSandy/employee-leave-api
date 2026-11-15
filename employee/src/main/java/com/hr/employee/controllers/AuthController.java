@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,9 +43,14 @@ public class AuthController {
     public ResponseEntity refresh(
         @AuthenticationPrincipal Jwt jwt
     ) throws BadRequestException {
+        if (!"refresh".equals(jwt.getClaimAsString("token_type"))) {
+            throw new BadCredentialsException("A refresh token is required.");
+        }
+
         return authService.refresh(
             UUID.fromString(jwt.getSubject()),
-            UUID.fromString(jwt.getClaims().get("session_id").toString())
+            UUID.fromString(jwt.getClaimAsString("session_id")),
+            jwt.getTokenValue()
         );
     }
 }

@@ -5,7 +5,6 @@ import com.hr.employee.dtos.request.RegisterRequestDto;
 import com.hr.employee.dtos.response.LoginResponseDto;
 import com.hr.employee.entities.User;
 import com.hr.employee.entities.UserSession;
-import com.hr.employee.enums.UserRoleEnum;
 import com.hr.employee.repositories.UserRepository;
 import com.hr.employee.repositories.UserSessionRepository;
 import com.hr.employee.utils.NetworkUtil;
@@ -18,12 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,7 +36,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public ResponseEntity<String> register(RegisterRequestDto registerRequestData) {
-        // Hash password using Argon2
         String hashedPassword = passwordEncoder.encode(registerRequestData.password());
 
         User user = new User().builder()
@@ -62,12 +59,17 @@ public class AuthService {
 
         UUID sessionId = UUID.randomUUID();
         UUID userId = UUID.fromString(authentication.getName());
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BadCredentialsException("User account not found."));
 
-        String accessToken = jwtService.generateToken(userId, sessionId, Duration.ofMinutes(15));
-        String refreshToken = jwtService.generateToken(userId, sessionId, Duration.ofDays(30));
+        String accessToken = jwtService.generateToken(
+            userId, user.getEmployeeId(), sessionId, user.getRole(), "access", Duration.ofMinutes(15)
+        );
+        String refreshToken = jwtService.generateToken(
+            userId, user.getEmployeeId(), sessionId, user.getRole(), "refresh", Duration.ofDays(30)
+        );
 
         UserAgent userAgent = userAgentAnalyzer.parse(request.getHeader("User-Agent"));
-        User user = userRepository.getReferenceById(userId);
 
         UserSession userSessions = new UserSession().builder()
             .user(user)
@@ -75,35 +77,33 @@ public class AuthService {
             .clientName(userAgent.getValue(UserAgent.AGENT_NAME))
             .osName(userAgent.getValue(UserAgent.OPERATING_SYSTEM_NAME))
             .ipAddress(NetworkUtil.getIp(request))
-            .token(refreshToken).build();
+            .token(refreshToken)
+            .build();
 
         userSessionRepository.save(userSessions);
 
         return ResponseEntity.ok()
-            .body(
-                new LoginResponseDto(
-                    accessToken,
-                    refreshToken
-                )
-            );
+            .body(new LoginResponseDto(accessToken, refreshToken));
     }
 
-    public ResponseEntity refresh(UUID userId, UUID sessionId) throws BadRequestException {
+    public ResponseEntity refresh(UUID userId, UUID sessionId, String presentedRefreshToken)
+        throws BadRequestException {
         UserSession userSession = userSessionRepository.findByClientSessionIdAndDeletedAtIsNull(sessionId)
-                .orElseThrow(() -> new BadRequestException("No session found"));
+            .orElseThrow(() -> new BadRequestException("No session found"));
 
-        String accessToken = jwtService.generateToken(userId, sessionId, Duration.ofMinutes(15));
+        if (!userId.equals(userSession.getUserId())
+            || !presentedRefreshToken.equals(userSession.getToken())) {
+            throw new BadCredentialsException("Invalid refresh token.");
+        }
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BadCredentialsException("User account not found."));
+
+        String accessToken = jwtService.generateToken(
+            userId, user.getEmployeeId(), sessionId, user.getRole(), "access", Duration.ofMinutes(15)
+        );
 
         return ResponseEntity.ok()
-            .body(
-                new LoginResponseDto(
-                    accessToken,
-                    userSession.getToken()
-                )
-            );
-    }
-
-    public boolean roleCheck(UUID userId, UserRoleEnum[] requiredUserRoles) {
-        return userRepository.existsByUserIdAndRolesNative(userId, List.of(requiredUserRoles));
+            .body(new LoginResponseDto(accessToken, userSession.getToken()));
     }
 }

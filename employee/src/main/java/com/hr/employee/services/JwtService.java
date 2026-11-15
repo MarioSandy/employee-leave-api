@@ -1,5 +1,6 @@
 package com.hr.employee.services;
 
+import com.hr.employee.enums.UserRoleEnum;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -26,20 +27,27 @@ public class JwtService {
         this.encoder = new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
     }
 
-    public String generateToken(UUID userId, UUID sessionId, TemporalAmount expiryTime) {
+    public String generateToken(
+        UUID userId,
+        UUID employeeId,
+        UUID sessionId,
+        UserRoleEnum role,
+        String tokenType,
+        TemporalAmount expiryTime
+    ) {
         Instant now = Instant.now();
 
-        // Build JWS header containing algorithm and Key ID (kid)
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
 
-        // Build Payload Claims
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuer("splitBillApi")
             .issuedAt(now)
             .expiresAt(now.plus(expiryTime))
             .subject(userId.toString())
-            .claim("session_id", sessionId)
-//                .claim("scope", scope)
+            .claim("employeeId", employeeId.toString())
+            .claim("session_id", sessionId.toString())
+            .claim("role", role.name())
+            .claim("token_type", tokenType)
             .build();
 
         return this.encoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
