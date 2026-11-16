@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class InitialAdminSeeder implements CommandLineRunner {
@@ -30,17 +32,14 @@ public class InitialAdminSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        seedDepartments();
+
         if (userRepository.findByUsername("admin").isPresent()) {
             return;
         }
 
         Department department = departmentRepository.findByCodeIgnoreCase("IT")
-            .orElseGet(() -> {
-                Department newDepartment = new Department();
-                newDepartment.setCode("IT");
-                newDepartment.setName("Information Technology");
-                return departmentRepository.save(newDepartment);
-            });
+            .orElseThrow();
 
         Employee employee = employeeRepository.findByEmployeeCode("EMP-0001")
             .orElseGet(() -> {
@@ -62,5 +61,26 @@ public class InitialAdminSeeder implements CommandLineRunner {
             .build();
 
         userRepository.save(admin);
+    }
+
+    private void seedDepartments() {
+        Map<String, String> departments = Map.of(
+            "IT", "Information Technology",
+            "HR", "Human Resources",
+            "FIN", "Finance",
+            "MKT", "Marketing",
+            "OPS", "Operations",
+            "SAL", "Sales"
+        );
+
+        departments.forEach((code, name) ->
+            departmentRepository.findByCodeIgnoreCase(code)
+                .orElseGet(() -> {
+                    Department department = new Department();
+                    department.setCode(code);
+                    department.setName(name);
+                    return departmentRepository.save(department);
+                })
+        );
     }
 }
