@@ -9,7 +9,6 @@ import com.hr.employee.repositories.DepartmentRepository;
 import com.hr.employee.repositories.EmployeeRepository;
 import com.hr.employee.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -23,9 +22,6 @@ public class InitialAdminSeeder implements CommandLineRunner {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${app.admin.password}")
-    private String adminPassword;
 
     @Override
     @Transactional
@@ -56,7 +52,7 @@ public class InitialAdminSeeder implements CommandLineRunner {
         User admin = User.builder()
             .name("System Administrator")
             .username("admin")
-            .password(passwordEncoder.encode(adminPassword))
+            .password(passwordEncoder.encode("Admin123!"))
             .employeeId(employee.getId())
             .role(UserRoleEnum.ADMIN)
             .build();
