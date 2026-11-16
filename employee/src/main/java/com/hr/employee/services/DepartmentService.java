@@ -24,19 +24,20 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponseDto create(DepartmentRequestDto req) {
-        if (repository.existsByNameIgnoreCase(req.name()))
+        String name = req.name().trim();
+        if (repository.existsByNameIgnoreCase(name))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Department already exists");
 
-        Department d = new Department();
-        d.setName(req.name().trim());
-        return toResponse(repository.save(d));
+        Department department = new Department();
+        department.setName(name);
+        return toResponse(repository.save(department));
     }
 
     public List<DepartmentResponseDto> list() {
         return repository.findAll().stream()
-                .sorted(Comparator.comparing(Department::getName, String.CASE_INSENSITIVE_ORDER))
-                .map(this::toResponse)
-                .toList();
+            .sorted(Comparator.comparing(Department::getName, String.CASE_INSENSITIVE_ORDER))
+            .map(this::toResponse)
+            .toList();
     }
 
     public DepartmentResponseDto getById(UUID id) {
@@ -45,31 +46,34 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponseDto update(UUID id, DepartmentRequestDto req) {
-        Department d = find(id);
-        if (repository.existsByNameIgnoreCaseAndIdNot(req.name(), id))
+        Department department = find(id);
+        String name = req.name().trim();
+
+        if (repository.existsByNameIgnoreCaseAndIdNot(name, id))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Department already exists");
-        d.setName(req.name().trim());
-        return toResponse(d);
+
+        department.setName(name);
+        return toResponse(department);
     }
 
     @Transactional
     public void delete(UUID id) {
-        Department d = find(id);
+        Department department = find(id);
         try {
-            repository.delete(d);
-            repository.flush(); // force the FK check now, so we can catch it here
+            repository.delete(department);
+            repository.flush();
         } catch (DataIntegrityViolationException ex) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Department is still used by employees");
+                "Department is still used by employees");
         }
     }
 
     private Department find(UUID id) {
         return repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
     }
 
-    private DepartmentResponseDto toResponse(Department d) {
-        return new DepartmentResponseDto(d.getId(), d.getName());
+    private DepartmentResponseDto toResponse(Department department) {
+        return new DepartmentResponseDto(department.getId(), department.getName());
     }
 }
