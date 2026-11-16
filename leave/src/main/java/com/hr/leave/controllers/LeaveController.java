@@ -27,14 +27,12 @@ public class LeaveController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequireRole({UserRoleEnum.EMPLOYEE, UserRoleEnum.MANAGER, UserRoleEnum.ADMIN})
     public LeaveResponseDto submit(@Valid @RequestBody CreateLeaveRequestDto req,
                                    @AuthenticationPrincipal Jwt jwt) {
         return service.submit(req, employeeId(jwt), jwt.getTokenValue());
     }
 
     @GetMapping("/me")
-    @RequireRole({UserRoleEnum.EMPLOYEE, UserRoleEnum.MANAGER, UserRoleEnum.ADMIN})
     public List<LeaveResponseDto> mine(@AuthenticationPrincipal Jwt jwt) {
         return service.findMine(employeeId(jwt));
     }
