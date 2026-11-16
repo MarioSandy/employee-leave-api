@@ -22,6 +22,7 @@ import java.util.UUID;
 public class LeaveRequest {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "employee_id", nullable = false)

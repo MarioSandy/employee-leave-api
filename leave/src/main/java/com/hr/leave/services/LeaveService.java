@@ -55,6 +55,7 @@ public class LeaveService {
         l.setEndDate(req.endDate());
         l.setReason(req.reason());
         l.setAttachmentUrl(req.attachmentUrl());
+        l = repository.save(l);
         return new LeaveResponseDto(
             l.getId(), l.getEmployeeId(), l.getLeaveType(),
             l.getStartDate(), l.getEndDate(), l.getTotalDays(),
