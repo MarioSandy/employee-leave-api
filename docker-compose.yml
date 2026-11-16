@@ -17,9 +17,7 @@ services:
       retries: 10
 
   employee-service:
-    build:
-      context: ./employee
-      dockerfile: dockerfile
+    build: ./employee
     container_name: employee-service
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/employee_db
@@ -33,9 +31,7 @@ services:
         condition: service_healthy
 
   leave-service:
-    build:
-      context: ./leave
-      dockerfile: dockerfile
+    build: ./leave
     container_name: leave-service
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/leave_db
