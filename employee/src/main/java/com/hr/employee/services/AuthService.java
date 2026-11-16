@@ -3,8 +3,11 @@ package com.hr.employee.services;
 import com.hr.employee.dtos.request.LoginRequestDto;
 import com.hr.employee.dtos.request.RegisterRequestDto;
 import com.hr.employee.dtos.response.LoginResponseDto;
+import com.hr.employee.entities.Employee;
 import com.hr.employee.entities.User;
 import com.hr.employee.entities.UserSession;
+import com.hr.employee.enums.UserRoleEnum;
+import com.hr.employee.repositories.EmployeeRepository;
 import com.hr.employee.repositories.UserRepository;
 import com.hr.employee.repositories.UserSessionRepository;
 import com.hr.employee.utils.NetworkUtil;
@@ -20,6 +23,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -30,18 +36,25 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserSessionRepository userSessionRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserAgentAnalyzer userAgentAnalyzer;
     private final AuthenticationManager authenticationManager;
 
+    @Transactional
     public ResponseEntity<String> register(RegisterRequestDto registerRequestData) {
+        Employee employee = employeeRepository.findById(registerRequestData.employeeId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+
         String hashedPassword = passwordEncoder.encode(registerRequestData.password());
 
         User user = new User().builder()
             .name(registerRequestData.name())
             .username(registerRequestData.username())
             .password(hashedPassword)
+            .employeeId(employee.getId())
+            .role(UserRoleEnum.EMPLOYEE)
             .build();
 
         userRepository.save(user);
