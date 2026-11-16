@@ -10,6 +10,7 @@ import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "leave_requests")
+@EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor
 public class LeaveRequest {
 
