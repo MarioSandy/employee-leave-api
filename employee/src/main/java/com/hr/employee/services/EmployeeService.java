@@ -47,7 +47,7 @@ public class EmployeeService {
     public List<EmployeeResponseDto> list(String department) {
         return repository.findAll().stream()
             .filter(e -> department == null
-                || e.getDepartment().getName().equalsIgnoreCase(department))
+                || e.getDepartment().getCode().equalsIgnoreCase(department))
             .map(this::toResponse)
             .toList();
     }
@@ -76,7 +76,7 @@ public class EmployeeService {
         return repository.findAll().stream()
             .filter(e -> e.getEmploymentStatus() == EmploymentStatusEnum.ACTIVE)
             .collect(Collectors.groupingBy(
-                e -> e.getDepartment().getName(),
+                e -> e.getDepartment().getCode(),
                 TreeMap::new,
                 Collectors.counting()
             ));
@@ -88,7 +88,7 @@ public class EmployeeService {
     }
 
     private void apply(Employee employee, EmployeeRequestDto req) {
-        Department department = departmentRepository.findById(req.departmentId())
+        Department department = departmentRepository.findByCodeIgnoreCase(req.departmentId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
 
         employee.setEmployeeCode(req.employeeCode());
@@ -103,6 +103,7 @@ public class EmployeeService {
             employee.getEmployeeCode(),
             employee.getFullName(),
             employee.getEmail(),
+            employee.getDepartment().getCode(),
             employee.getDepartment().getName(),
             employee.getEmploymentStatus()
         );

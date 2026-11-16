@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/departments")
@@ -33,22 +32,22 @@ public class DepartmentController {
         return service.list();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{code}")
     @RequireRole({UserRoleEnum.MANAGER, UserRoleEnum.ADMIN})
-    public DepartmentResponseDto get(@PathVariable UUID id) {
-        return service.getById(id);
+    public DepartmentResponseDto get(@PathVariable String code) {
+        return service.getByCode(code);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{code}")
     @RequireRole({UserRoleEnum.ADMIN})
-    public DepartmentResponseDto update(@PathVariable UUID id, @Valid @RequestBody DepartmentRequestDto req) {
-        return service.update(id, req);
+    public DepartmentResponseDto update(@PathVariable String code, @Valid @RequestBody DepartmentRequestDto req) {
+        return service.update(code, req);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequireRole({UserRoleEnum.ADMIN})
-    public void delete(@PathVariable UUID id) {
-        service.delete(id);
+    public void delete(@PathVariable String code) {
+        service.delete(code);
     }
 }

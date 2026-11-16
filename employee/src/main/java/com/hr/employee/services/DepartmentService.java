@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +23,16 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponseDto create(DepartmentRequestDto req) {
+        String code = req.code().trim().toUpperCase();
         String name = req.name().trim();
+
+        if (repository.existsByCodeIgnoreCase(code))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Department code already exists");
         if (repository.existsByNameIgnoreCase(name))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Department already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Department name already exists");
 
         Department department = new Department();
+        department.setCode(code);
         department.setName(name);
         return toResponse(repository.save(department));
     }
@@ -40,25 +44,28 @@ public class DepartmentService {
             .toList();
     }
 
-    public DepartmentResponseDto getById(UUID id) {
-        return toResponse(find(id));
+    public DepartmentResponseDto getByCode(String code) {
+        return toResponse(findByCode(code));
     }
 
     @Transactional
-    public DepartmentResponseDto update(UUID id, DepartmentRequestDto req) {
-        Department department = find(id);
+    public DepartmentResponseDto update(String code, DepartmentRequestDto req) {
+        Department department = findByCode(code);
+        String requestedCode = req.code().trim().toUpperCase();
         String name = req.name().trim();
 
-        if (repository.existsByNameIgnoreCaseAndIdNot(name, id))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Department already exists");
+        if (!department.getCode().equalsIgnoreCase(requestedCode))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Department code cannot be changed");
+        if (repository.existsByNameIgnoreCaseAndIdNot(name, department.getId()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Department name already exists");
 
         department.setName(name);
         return toResponse(department);
     }
 
     @Transactional
-    public void delete(UUID id) {
-        Department department = find(id);
+    public void delete(String code) {
+        Department department = findByCode(code);
         try {
             repository.delete(department);
             repository.flush();
@@ -68,12 +75,12 @@ public class DepartmentService {
         }
     }
 
-    private Department find(UUID id) {
-        return repository.findById(id)
+    private Department findByCode(String code) {
+        return repository.findByCodeIgnoreCase(code)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
     }
 
     private DepartmentResponseDto toResponse(Department department) {
-        return new DepartmentResponseDto(department.getId(), department.getName());
+        return new DepartmentResponseDto(department.getCode(), department.getName());
     }
 }

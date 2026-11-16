@@ -67,12 +67,6 @@ public class User {
     @EqualsAndHashCode.Exclude
     private Employee employee;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Department department;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

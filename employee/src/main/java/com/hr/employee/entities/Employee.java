@@ -35,7 +35,7 @@ public class Employee {
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id", nullable = false)
+    @JoinColumn(name = "department_id", referencedColumnName = "code", nullable = false)
     private Department department;
 
     @Enumerated(EnumType.STRING)
