@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface UserSessionRepository extends JpaRepository<UserSession, UUID> {
+public interface UserSessionRepository extends JpaRepository<UserSession, Long> {
     Optional<UserSession> findByClientSessionIdAndDeletedAtIsNull(UUID clientSessionId);
 
     @Transactional
