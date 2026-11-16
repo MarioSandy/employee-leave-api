@@ -23,12 +23,9 @@ spring:
       salt-length: 16
       hash-length: 32
 
-app:
-  admin:
-    password: ${ADMIN_PASSWORD}
-
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
