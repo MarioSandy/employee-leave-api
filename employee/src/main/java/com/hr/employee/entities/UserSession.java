@@ -18,7 +18,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -55,14 +55,14 @@ public class UserSession {
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at", insertable = false)
-    private LocalDateTime lastUpdatedTime;
+    @Column(name = "updated_at")
+    private Instant lastUpdatedTime;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
