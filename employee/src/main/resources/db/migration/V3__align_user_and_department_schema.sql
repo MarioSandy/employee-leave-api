@@ -9,3 +9,6 @@ ALTER TABLE users
 
 ALTER TABLE departments
     ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+
+ALTER TABLE users
+    ADD CONSTRAINT uk_users_employee_id UNIQUE (employee_id);
