@@ -8,9 +8,6 @@ import com.hr.employee.services.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,19 +41,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public EmployeeResponseDto get(
-        @PathVariable UUID id,
-        @AuthenticationPrincipal Jwt jwt
-    ) {
-        String role = jwt.getClaimAsString("role");
-        boolean privileged = UserRoleEnum.ADMIN.name().equals(role)
-            || UserRoleEnum.MANAGER.name().equals(role);
-        String employeeId = jwt.getClaimAsString("employeeId");
-
-        if (!privileged && (employeeId == null || !id.equals(UUID.fromString(employeeId)))) {
-            throw new AccessDeniedException("You can only view your own employee record.");
-        }
-
+    public EmployeeResponseDto get(@PathVariable UUID id) {
         return service.getById(id);
     }
 
