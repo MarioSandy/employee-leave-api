@@ -35,8 +35,9 @@ public class Employee {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String department;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
