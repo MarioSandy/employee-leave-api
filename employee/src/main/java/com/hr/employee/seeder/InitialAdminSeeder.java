@@ -21,6 +21,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class InitialAdminSeeder implements CommandLineRunner {
 
+    private static final String DEMO_USER_PASSWORD = "Demo123!";
+
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
@@ -33,6 +35,7 @@ public class InitialAdminSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         seedDepartments();
+        seedDemoEmployeesAndUsers();
 
         if (userRepository.findByUsername("admin").isPresent()) {
             return;
@@ -82,5 +85,65 @@ public class InitialAdminSeeder implements CommandLineRunner {
                     return departmentRepository.save(department);
                 })
         );
+    }
+
+    private void seedDemoEmployeesAndUsers() {
+        seedDemoAccount(
+            "EMP-0003", "Alice Johnson", "alice.johnson@example.com",
+            "HR", "alice.johnson", UserRoleEnum.MANAGER
+        );
+        seedDemoAccount(
+            "EMP-0004", "Robert Chen", "robert.chen@example.com",
+            "FIN", "robert.chen", UserRoleEnum.EMPLOYEE
+        );
+        seedDemoAccount(
+            "EMP-0005", "Emily Davis", "emily.davis@example.com",
+            "MKT", "emily.davis", UserRoleEnum.EMPLOYEE
+        );
+        seedDemoAccount(
+            "EMP-0006", "Daniel Wilson", "daniel.wilson@example.com",
+            "OPS", "daniel.wilson", UserRoleEnum.MANAGER
+        );
+        seedDemoAccount(
+            "EMP-0007", "Olivia Martinez", "olivia.martinez@example.com",
+            "SAL", "olivia.martinez", UserRoleEnum.EMPLOYEE
+        );
+    }
+
+    private void seedDemoAccount(
+        String employeeCode,
+        String fullName,
+        String email,
+        String departmentCode,
+        String username,
+        UserRoleEnum role
+    ) {
+        Department department = departmentRepository.findByCodeIgnoreCase(departmentCode)
+            .orElseThrow();
+
+        Employee employee = employeeRepository.findByEmployeeCode(employeeCode)
+            .orElseGet(() -> {
+                Employee newEmployee = new Employee();
+                newEmployee.setEmployeeCode(employeeCode);
+                newEmployee.setFullName(fullName);
+                newEmployee.setEmail(email);
+                newEmployee.setDepartment(department);
+                newEmployee.setEmploymentStatus(EmploymentStatusEnum.ACTIVE);
+                return employeeRepository.save(newEmployee);
+            });
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            return;
+        }
+
+        User user = User.builder()
+            .name(fullName)
+            .username(username)
+            .password(passwordEncoder.encode(DEMO_USER_PASSWORD))
+            .employeeId(employee.getId())
+            .role(role)
+            .build();
+
+        userRepository.save(user);
     }
 }
