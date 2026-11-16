@@ -27,6 +27,9 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false, unique = true, length = 30)
+    private String code;
+
     @Column(nullable = false, unique = true)
     private String name;
 
@@ -44,5 +47,5 @@ public class Department {
     @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private List<User> listUsers;
+    private List<Employee> employees;
 }
