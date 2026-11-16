@@ -61,7 +61,7 @@ public class User {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", insertable = false, updatable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
