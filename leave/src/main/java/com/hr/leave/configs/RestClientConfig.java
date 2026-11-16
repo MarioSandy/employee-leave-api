@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
     @Bean
-    RestClient employeeRestClient(@Value("${employee-service.url}") String baseUrl) {
+    RestClient employeeRestClient(@Value("${spring.employee-service.url}") String baseUrl) {
         return RestClient.builder().baseUrl(baseUrl).build();
     }
 }

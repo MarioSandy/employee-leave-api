@@ -4,6 +4,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,6 +34,9 @@ public class EmployeeClient {
                     .body(EmployeeInfo.class);
         } catch (HttpClientErrorException.NotFound e) {
             return null;
+        } catch (HttpStatusCodeException e) {
+            throw new ResponseStatusException(e.getStatusCode(),
+                    "Employee service returned an error");
         } catch (RestClientException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Employee service is unavailable");
