@@ -13,17 +13,14 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
 
-    @Query(
-        value =
-            "SELECT EXISTS (" +
-            "   SELECT 1 " +
-            "   FROM User u " +
-            "   WHERE u.id = :id " +
-            "       AND u.role IN :roles" +
-            ") "
-    )
+    @Query("""
+        SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END
+        FROM User u
+        WHERE u.id = :id
+          AND u.role IN :roles
+        """)
     boolean existsByUserIdAndRolesNative(
-            @Param("id") UUID userId,
-            @Param("role") Collection<UserRoleEnum> roles
+        @Param("id") UUID userId,
+        @Param("roles") Collection<UserRoleEnum> roles
     );
 }
